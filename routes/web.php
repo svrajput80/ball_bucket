@@ -28,3 +28,4 @@ Route::post('/addBook',[ballbucket::class, 'addBook']);
 Route::post('/showbox',[ballbucket::class, 'showBox']);
 Route::get('/book',[ballbucket::class, 'showBook']);
 Route::post('/savebox',[ballbucket::class, 'savebox']);
+Route::get('/report',[ballbucket::class, 'report']);
