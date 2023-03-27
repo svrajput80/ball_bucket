@@ -10,6 +10,7 @@
 <body>
 <div class="container">
       <h2 class="login-title">Boxs</h2>
+      <a href="/report" class="button_green">Report</a>
       <div class="grid-container">
         <div class="grid-item"><a href="/">Box</a></div>
         <div class="grid-item"><a href="/books" >Add book</a></div>

@@ -90,10 +90,10 @@ class ballbucket extends Controller
     {
        $book_id = $request->bookname;
        $qty = $request->bookname;
-        $boxe = boxe::orderBy('volume', 'DESC')->get()->toArray();
-        $box_book = box_book::all()->toArray();
-        $book = book::where([['id', $request->bookname]])->get()->toArray();
-        $volume = $book[0]["volume"] * $request->qty;
+       $box_book = box_book::all()->toArray();
+       $book = book::where([['id', $request->bookname]])->get()->toArray();
+       $volume = $book[0]["volume"] * $request->qty;
+       $boxe = boxe::where([['volume', '>=', $volume]])->orderBy('volume', 'DESC')->get()->toArray();
         if($box_book == null){
             if($boxe[0]['volume'] < $volume){
                 return redirect()->back()->with([
@@ -104,7 +104,8 @@ class ballbucket extends Controller
                 return view('box', compact('remaning_box', 'book_id', 'qty'));
             }
         }else{
-            $boxVolumn = DB::select("SELECT bx.id, bx.box, (bx.volume - (b.volume * bb.qty)) AS volume FROM box_books AS bb RIGHT JOIN boxes AS bx ON bx.id = bb.box_id RIGHT JOIN books AS b ON b.id = bb.book_id WHERE bx.id IS NOT null ");
+            $boxVolumn = DB::select("SELECT bx.id, bx.box, (bx.volume - (b.volume * bb.qty)) AS volume,  1 AS recommended FROM box_books AS bb RIGHT JOIN boxes AS bx ON bx.id = bb.box_id
+             RIGHT JOIN books AS b ON b.id = bb.book_id WHERE bx.id IS NOT null  AND b.id = $request->bookname");
             $boxVolumn = json_decode(json_encode($boxVolumn), true);
             $Where = [
                 
@@ -135,11 +136,28 @@ class ballbucket extends Controller
             'book_id' => 'required',
             'qty' => 'required',
         ]);
-        box_book::updateOrCreate(
-            ['box_id' => $request->box_id, 'book_id' => $request->book_id],
-            ['qty' => $request->box_id]
-        );
+
+        $remaning_box = box_book::where([['box_id', $request->box_id], ['book_id', $request->book_id]])->get()->toArray();
+        if(empty($remaning_box)){
+            box_book::updateOrCreate(
+                ['box_id' => $request->box_id, 'book_id' => $request->book_id],
+                ['qty' => $request->qty]
+            );
+        }else{
+            $volume = $remaning_box[0]['qty'] + (int)$request->qty;
+            box_book::where(
+                ['box_id' => $request->box_id, 'book_id' => $request->book_id])->update(['qty' => $volume]);
+        }
+        
         $book = book::all();
-        return view('show', compact('book'));;
+        return view('show', compact('book'));
+    }
+
+    public function report(Request $request)
+    {
+        $report = boxe::leftJoin('box_books', 'box_books.box_id', '=', 'boxes.id')->leftJoin('books', 'books.id', '=', 'box_books.book_id')
+            ->select('boxes.box','books.book', 'books.author', 'box_books.qty')->get()->toArray();
+
+        return view('report', compact('report'));
     }
 }
