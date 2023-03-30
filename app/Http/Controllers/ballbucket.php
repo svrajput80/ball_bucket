@@ -7,6 +7,7 @@ use App\Models\book;
 use App\Models\box_book;
 use App\Models\boxe;
 use Illuminate\Support\Facades\DB;
+use Mail;
 
 class ballbucket extends Controller
 {
@@ -62,6 +63,15 @@ class ballbucket extends Controller
        
         
         try{
+           
+            // Sent Email that a new books were added
+            $data=["book_name"=>$request->book, "Volumn"=>$volume];
+            $user['to'] = 'svrajput80@gmail.com';
+            Mail::send('mail_view', $data, function($messages) use ($user){
+                $messages->to($user['to']);
+                $messages->subject('Laravel Mail');
+            });
+
             book::updateOrCreate(
                 ['book' => $request->book, 'author' => $request->author],
                 ['volume' => $volume]
